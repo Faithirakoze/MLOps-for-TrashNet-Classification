@@ -120,12 +120,18 @@ Compose maps those host ports to the same internal gateway/dashboard ports. Insi
 
 Install Locust in a local Python environment, then place a valid JPEG, PNG, or WebP image at `load_test_images/sample.jpg` (or set `LOCUST_IMAGE` to another image path). This image is only a request fixture and should not be committed.
 
-```bash
+```powershell
 python -m pip install locust
-mkdir -p load_test_images locust-results
+New-Item -ItemType Directory -Force -Path .\load_test_images, .\locust-results
 ```
 
-Copy a valid image to `load_test_images/sample.jpg`. Keep the Locust client on the same machine and use the same image for each replica-count run.
+Copy a valid image to `load_test_images\sample.jpg`, for example:
+
+```powershell
+Copy-Item "C:\path\to\valid-image.jpg" .\load_test_images\sample.jpg
+```
+
+Keep the Locust client on the same machine and use the same image for each replica-count run.
 
 ### Prepare the EC2 deployment
 

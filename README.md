@@ -1,6 +1,21 @@
 # TrashNet MLOps for Waste Classification
 
-An image classification application for six waste categories, with a Streamlit dashboard, FastAPI inference service, model registry, and retraining/promotion workflow. The classifier is based on TensorFlow/Keras and MobileNetV2.
+## Project description
+
+TrashNet MLOps is an image classification application for sorting waste into six categories: cardboard, glass, metal, paper, plastic, and trash. It combines a TensorFlow/Keras MobileNetV2 classifier with a FastAPI prediction service and a Streamlit dashboard. The project also includes model monitoring, a model registry, a retraining pipeline, and load testing for the prediction API.
+
+## Demo video
+
+[Watch the TrashNet MLOps demo on YouTube](https://youtu.be/23TlNrnso6I?si=nR3MvjmdhPj5T7Fx)
+
+## Application URLs
+
+- **AWS dashboard:** [http://16.170.228.234:8501](http://16.170.228.234:8501) — EC2 public IP may change when the instance is stopped and started. Access is restricted by the EC2 security group.
+- **Local dashboard:** [http://localhost:8501](http://localhost:8501)
+- **Local API documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Local API health:** [http://localhost:8000/health](http://localhost:8000/health)
+
+The AWS API port is not open for general browser access. It is opened only to the Locust client's IP while running a load test.
 
 ## Features
 
@@ -97,7 +112,7 @@ DASHBOARD_PORT=8502
 
 Compose maps those host ports to the same internal gateway/dashboard ports. Inside Compose, the dashboard calls the gateway at `http://gateway:8000`. `.env` is ignored by Git; do not commit secrets.
 
-## Load test the prediction API with Locust
+## Flood request simulation with Locust
 
 `locustfile.py` repeatedly posts a valid image to `POST /predict` and checks for a successful JSON prediction. Request statistics include latency percentiles, requests per second, and failures. Locust can write CSV statistics and an HTML report; see the [Locust configuration reference](https://docs.locust.io/en/stable/config-options.html).
 
@@ -144,13 +159,15 @@ Run `api=2` using `--csv locust-results/api-2 --html locust-results/api-2.html`.
 
 Use the same user count (`-u`), spawn rate (`-r`), duration (`-t`), image, EC2 instance, and software version for every run. Start with a modest load such as 10 users and increase only if the instance remains stable. The HTML reports and CSV files are written under `locust-results/` and ignored by Git.
 
-Compare these values from each Locust report:
+### Results
+
+**Measurement status: pending.** No Locust results have been collected for the deployed EC2 instance yet, so this README does not claim measured latency or throughput. After running the one-, two-, and three-container scenarios above, copy the request count, median latency, 95th-percentile latency, requests per second, and failures from each HTML/CSV report into this table.
 
 | API containers | Requests | Median latency | 95th-percentile latency | Requests/sec | Failures |
 |---:|---:|---:|---:|---:|---:|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
+| 1 | Pending | Pending | Pending | Pending | Pending |
+| 2 | Pending | Pending | Pending | Pending | Pending |
+| 3 | Pending | Pending | Pending | Pending | Pending |
 
 When finished, return the deployment to one API replica and remove the temporary port `8000` security group rule:
 

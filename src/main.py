@@ -1,8 +1,9 @@
 import time
 from contextlib import asynccontextmanager
 from io import BytesIO
+from typing import Annotated
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from PIL import Image, UnidentifiedImageError
 
 from src.prediction import (
@@ -11,6 +12,11 @@ from src.prediction import (
     predict_image
 )
 
+from src.retraining import (
+    CLASS_NAMES,
+    validate_image,
+    save_uploaded_image
+)
 
 # Application start time
 START_TIME = time.monotonic()
@@ -104,3 +110,38 @@ async def predict(file: UploadFile = File(...)):
     )
 
     return result
+
+@app.post("/retraining/upload")
+async def upload_retraining_image(
+    category: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """Upload and validate one labelled image for model retraining."""
+
+    if category not in CLASS_NAMES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid category. Choose from: {CLASS_NAMES}"
+        )
+
+    contents = await file.read()
+
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail="Image exceeds the 10 MB upload limit."
+        )
+
+    try:
+        validate_image(contents)
+        filename = save_uploaded_image(contents, category)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    finally:
+        await file.close()
+
+    return {
+        "category": category,
+        "original_filename": file.filename,
+        "saved_filename": filename
+    }

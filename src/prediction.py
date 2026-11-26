@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from PIL import Image, ImageOps
+from src.model_registry import MODELS_DIR, get_production_model
 
 
 # Project paths
@@ -20,8 +21,12 @@ def load_class_names(path=CLASS_NAMES_PATH):
         return json.load(file)
 
 
-def load_trained_model(path=MODEL_PATH):
-    """Load the saved Keras waste classification model."""
+def load_trained_model(path=None):
+    """Load the model artifact registered as the current production model."""
+    if path is None:
+        production = get_production_model()
+        path = MODELS_DIR / production["file"]
+
     if not path.exists():
         raise FileNotFoundError(f"Model not found: {path}")
 

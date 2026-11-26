@@ -1,0 +1,32 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local data, uploads, and databases
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated archives
+*.zip
+
+# Local secrets and settings
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Model artifacts: keep the production model and registry needed to run the app
+models/*
+!models/class_names.json
+!models/trashnet_best_model.h5
+!models/registry/
+!models/registry/model_registry.json

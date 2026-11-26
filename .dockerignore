@@ -1,0 +1,14 @@
+.git
+.venv
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.streamlit/secrets.toml
+data/**
+!data/.keep
+notebook
+tests
+*.zip
+check_holdout.py
+evaluate_*.py
+inspect_*.py

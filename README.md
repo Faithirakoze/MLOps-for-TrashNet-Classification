@@ -12,8 +12,8 @@ TrashNet MLOps is an image classification application for sorting waste into six
 
 - **AWS dashboard:** [http://16.170.228.234:8501](http://16.170.228.234:8501) — EC2 public IP may change when the instance is stopped and started. Access is restricted by the EC2 security group.
 - **Local dashboard:** [http://localhost:8501](http://localhost:8501)
-- **Local API documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Local API health:** [http://localhost:8000/health](http://localhost:8000/health)
+- **Local API documentation:** [http://localhost:8002/docs](http://localhost:8000/docs)
+- **Local API health:** [http://localhost:8002/health](http://localhost:8000/health)
 
 The AWS API port is not open for general browser access. It is opened only to the Locust client's IP while running a load test.
 
@@ -74,7 +74,7 @@ Start the Streamlit dashboard in a second terminal, with the same virtual enviro
 streamlit run web_app/app.py
 ```
 
-Open <http://localhost:8501> for the dashboard and <http://localhost:8000/docs> for interactive API documentation. The dashboard defaults to `http://127.0.0.1:8000`; set `API_URL` if the API is on another address.
+Open <http://localhost:8501> for the dashboard and <http://localhost:8002/docs> for interactive API documentation. The dashboard defaults to `http://127.0.0.1:8002`; set `API_URL` if the API is on another address.
 
 ## Run with Docker Compose
 
@@ -89,8 +89,8 @@ docker compose up --build -d
 Open:
 
 - Dashboard: <http://localhost:8501>
-- API docs: <http://localhost:8000/docs>
-- API health: <http://localhost:8000/health>
+- API docs: <http://localhost:8002/docs>
+- API health: <http://localhost:8002/health>
 
 Useful commands:
 
@@ -239,7 +239,7 @@ The prediction and retraining image endpoints accept JPEG, PNG, and WebP images 
 
 - Launch an Ubuntu EC2 instance with enough memory and disk for TensorFlow and model artifacts.
 - Install Docker Engine and Compose using [Docker's Ubuntu installation instructions](https://docs.docker.com/engine/install/ubuntu/).
-- In the security group, restrict SSH (`22`) to your IP and allow the dashboard (`8501`) only from intended clients. Keep API port `8000` closed to inbound traffic except temporarily from the Locust client's IP during load testing. See [EC2 security group guidance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-security-group.html).
+- In the security group, restrict SSH (`22`) to your IP and allow the dashboard (`8501`) only from intended clients. Keep API port `8002` closed to inbound traffic except temporarily from the Locust client's IP during load testing. See [EC2 security group guidance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-security-group.html).
 - Start the app on EC2 with `sudo docker compose up --build -d`.
 - The dashboard has no built-in login or HTTPS. For a private demo, restrict port `8501` to your IP. Before making it publicly accessible, put it behind HTTPS and add access control.
 - Persist and back up the EC2 storage that contains Docker volumes. Docker volumes survive container recreation, but data may be lost if the underlying instance storage is deleted. See [EC2 storage options](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Storage.html).

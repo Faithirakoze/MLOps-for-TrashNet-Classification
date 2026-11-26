@@ -6,7 +6,6 @@ import requests
 # Page configuration
 st.set_page_config(
     page_title="TrashNet MLOps",
-    page_icon="♻️",
     layout="wide"
 )
 
@@ -14,7 +13,7 @@ st.set_page_config(
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
 # Application title
-st.title("♻️ TrashNet MLOps Dashboard")
+st.title("TrashNet MLOps Dashboard")
 
 st.write(
     "An intelligent waste classification system "
@@ -43,17 +42,17 @@ st.subheader("Application Features")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("### 🔍 Waste Prediction")
+    st.markdown("### Waste Prediction")
     st.write("Upload an image and classify it into one of six waste categories.")
 
-    st.markdown("### 📊 Data Visualizations")
+    st.markdown("### Data Visualizations")
     st.write("Explore dataset distributions and model evaluation results.")
 
 with col2:
-    st.markdown("### ⚙️ Model Monitoring")
+    st.markdown("### Model Monitoring")
     st.write("Monitor model version, uptime and system status.")
 
-    st.markdown("### 🔄 Upload and Retrain")
+    st.markdown("### Upload and Retrain")
     st.write("Upload labelled images and initiate model retraining.")
 
 st.divider()

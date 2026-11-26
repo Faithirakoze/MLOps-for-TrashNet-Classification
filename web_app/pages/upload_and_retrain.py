@@ -46,7 +46,6 @@ ALLOWED_EXTENSIONS = {
 
 st.set_page_config(
     page_title="Upload and Retrain",
-    page_icon="♻️",
     layout="wide"
 )
 
@@ -409,7 +408,7 @@ else:
 
                     for filename, reason in rejected_files:
                         st.write(
-                            f"✗ {filename} — {reason}"
+                            f"Rejected: {filename} — {reason}"
                         )
 
             if st.button(
@@ -510,17 +509,17 @@ if "upload_result" in st.session_state:
             )
 
             for filename in result.get("uploaded_files", []):
-                st.write(f"✓ {filename}")
+                st.write(f"Uploaded: {filename}")
 
             for filename in result.get("rejected_files", []):
-                st.write(f"✗ {filename}")
+                st.write(f"Rejected: {filename}")
 
     if stored_result.get("rejected_files"):
 
         with st.expander("Files rejected during ZIP processing"):
 
             for filename, reason in stored_result["rejected_files"]:
-                st.write(f"✗ {filename} — {reason}")
+                st.write(f"Rejected: {filename} — {reason}")
 
 
 # -----------------------------

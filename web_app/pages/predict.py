@@ -10,11 +10,10 @@ PREDICT_URL = f"{API_URL}/predict"
 
 st.set_page_config(
     page_title="Waste Prediction | TrashNet",
-    page_icon="♻️",
     layout="wide"
 )
 
-st.title("♻️ Waste Classification")
+st.title("Waste Classification")
 st.write("Upload an image to identify its waste category.")
 
 st.divider()

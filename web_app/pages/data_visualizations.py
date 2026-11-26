@@ -4,11 +4,10 @@ import plotly.express as px
 
 st.set_page_config(
     page_title="Data Visualizations | TrashNet",
-    page_icon="📊",
     layout="wide"
 )
 
-st.title("📊 Data Visualizations")
+st.title("Data Visualizations")
 st.write(
     "Explore dataset distribution and evaluate "
     "the performance of the TrashNet classification model."

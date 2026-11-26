@@ -19,11 +19,10 @@ REGISTRY_PATH = BASE_DIR / "models" / "registry" / "model_registry.json"
 
 st.set_page_config(
     page_title="Model Monitoring | TrashNet",
-    page_icon="⚙️",
     layout="wide"
 )
 
-st.title("⚙️ Model Monitoring")
+st.title("Model Monitoring")
 st.write("Monitor API health, model uptime and registered model performance.")
 
 # --------------------------------------------------
@@ -69,7 +68,7 @@ def get_api_data(endpoint):
 # REFRESH
 # --------------------------------------------------
 
-if st.button("🔄 Refresh Monitoring Data"):
+if st.button("Refresh Monitoring Data"):
     st.rerun()
 
 # --------------------------------------------------

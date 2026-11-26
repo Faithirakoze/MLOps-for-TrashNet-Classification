@@ -33,18 +33,11 @@ from src.model_registry import (
 )
 
 
-# --------------------------------------------------
-# 1. PROJECT CONFIGURATION
-# --------------------------------------------------
-
 MODELS_DIR = BASE_DIR / "models"
 HOLDOUT_DIR = BASE_DIR / "data" / "holdout"
 REGISTRY_PATH = MODELS_DIR / "registry" / "model_registry.json"
 
 
-# --------------------------------------------------
-# 2. GENERATE NEXT CANDIDATE VERSION
-# --------------------------------------------------
 
 def get_next_candidate_version():
     """
@@ -63,8 +56,8 @@ def get_next_candidate_version():
     for path in MODELS_DIR.glob("trashnet_candidate_*.keras"):
 
         match = re.match(
-            r"^trashnet_candidate_(\d+\.\d+\.\d+)\.keras$",
-            path.name
+            r"^(\d+)\.(\d+)\.(\d+)$",
+            version
         )
 
         if match:
@@ -98,10 +91,6 @@ def get_next_candidate_version():
 
     return next_version
 
-
-# --------------------------------------------------
-# 3. LOAD INDEPENDENT HOLDOUT DATASET
-# --------------------------------------------------
 
 def load_holdout_dataset():
     """
@@ -189,10 +178,6 @@ def load_holdout_dataset():
     return X_holdout, y_holdout
 
 
-# --------------------------------------------------
-# 4. EVALUATE MODEL
-# --------------------------------------------------
-
 def evaluate_model(model_path, X, y):
     """
     Evaluate a model on a supplied dataset.
@@ -250,10 +235,6 @@ def evaluate_model(model_path, X, y):
     }
 
 
-# --------------------------------------------------
-# 5. RUN COMPLETE MLOPS PIPELINE
-# --------------------------------------------------
-
 def run_mlops_pipeline(candidate_version=None):
     """
     Execute the complete TrashNet MLOps workflow.
@@ -276,9 +257,6 @@ def run_mlops_pipeline(candidate_version=None):
     print("TRASHNET MLOPS PIPELINE")
     print("=" * 55)
 
-    # --------------------------------------------------
-    # STEP 1: LOAD PRODUCTION MODEL
-    # --------------------------------------------------
 
     print("\nSTEP 1: LOADING PRODUCTION MODEL")
 
@@ -292,9 +270,6 @@ def run_mlops_pipeline(candidate_version=None):
     print("Production version:", production["version"])
     print("Production file:", production_model_path.name)
 
-    # --------------------------------------------------
-    # STEP 2: GENERATE CANDIDATE VERSION
-    # --------------------------------------------------
 
     print("\nSTEP 2: GENERATING CANDIDATE VERSION")
 
@@ -329,9 +304,6 @@ def run_mlops_pipeline(candidate_version=None):
     print("Candidate version:", candidate_version)
     print("Candidate file:", candidate_model_path.name)
 
-    # --------------------------------------------------
-    # STEP 3: PREPARE TRAINING DATA
-    # --------------------------------------------------
 
     print("\nSTEP 3: PREPARING TRAINING DATA")
 
@@ -357,9 +329,6 @@ def run_mlops_pipeline(candidate_version=None):
 
     print("Total training images:", len(X))
 
-    # --------------------------------------------------
-    # STEP 4: SPLIT TRAINING AND VALIDATION DATA
-    # --------------------------------------------------
 
     print("\nSTEP 4: SPLITTING TRAINING DATA")
 
@@ -372,17 +341,11 @@ def run_mlops_pipeline(candidate_version=None):
     print("Training images:", len(X_train))
     print("Validation images:", len(X_val))
 
-    # --------------------------------------------------
-    # STEP 5: LOAD INDEPENDENT HOLDOUT DATA
-    # --------------------------------------------------
 
     print("\nSTEP 5: LOADING INDEPENDENT HOLDOUT DATA")
 
     X_holdout, y_holdout = load_holdout_dataset()
 
-    # --------------------------------------------------
-    # STEP 6: EVALUATE CURRENT PRODUCTION MODEL
-    # --------------------------------------------------
 
     print("\nSTEP 6: EVALUATING PRODUCTION MODEL")
 
@@ -397,9 +360,6 @@ def run_mlops_pipeline(candidate_version=None):
     for metric, value in current_metrics.items():
         print(f"{metric}: {value:.4f}")
 
-    # --------------------------------------------------
-    # STEP 7: RETRAIN PRODUCTION MODEL
-    # --------------------------------------------------
 
     print("\nSTEP 7: RETRAINING MODEL")
 
@@ -422,9 +382,6 @@ def run_mlops_pipeline(candidate_version=None):
         best_validation_f1
     )
 
-    # --------------------------------------------------
-    # STEP 8: EVALUATE CANDIDATE MODEL
-    # --------------------------------------------------
 
     print("\nSTEP 8: EVALUATING CANDIDATE MODEL")
 
@@ -439,10 +396,6 @@ def run_mlops_pipeline(candidate_version=None):
     for metric, value in candidate_metrics.items():
         print(f"{metric}: {value:.4f}")
 
-    # --------------------------------------------------
-    # STEP 9: APPLY PROMOTION CRITERIA
-    # --------------------------------------------------
-
     print("\nSTEP 9: APPLYING PROMOTION CRITERIA")
 
     decision = evaluate_promotion(
@@ -454,9 +407,6 @@ def run_mlops_pipeline(candidate_version=None):
     print("Approved:", decision["approved"])
     print("Reason:", decision["reason"])
 
-    # --------------------------------------------------
-    # STEP 10: REGISTER CANDIDATE
-    # --------------------------------------------------
 
     print("\nSTEP 10: REGISTERING CANDIDATE")
 
@@ -466,10 +416,6 @@ def run_mlops_pipeline(candidate_version=None):
         metrics=candidate_metrics,
         status="candidate"
     )
-
-    # --------------------------------------------------
-    # STEP 11: PROMOTE OR REJECT CANDIDATE
-    # --------------------------------------------------
 
     print("\nSTEP 11: UPDATING MODEL REGISTRY")
 
@@ -501,9 +447,6 @@ def run_mlops_pipeline(candidate_version=None):
         print("Candidate rejected.")
         print("Previous production remains unchanged.")
 
-    # --------------------------------------------------
-    # STEP 12: REPORT FINAL PRODUCTION MODEL
-    # --------------------------------------------------
 
     final_production = get_production_model()
 
@@ -529,10 +472,6 @@ def run_mlops_pipeline(candidate_version=None):
         "candidate_version": candidate_version
     }
 
-
-# --------------------------------------------------
-# 6. EXECUTION
-# --------------------------------------------------
 
 if __name__ == "__main__":
     run_mlops_pipeline()

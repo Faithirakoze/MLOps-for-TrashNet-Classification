@@ -20,11 +20,6 @@ from tensorflow.keras.callbacks import (
     ReduceLROnPlateau
 )
 
-
-# --------------------------------------------------
-# 1. PROJECT CONFIGURATION
-# --------------------------------------------------
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 MODEL_PATH = BASE_DIR / "models" / "trashnet_best_model.h5"
@@ -53,9 +48,6 @@ IMAGE_SIZE = (224, 224)
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
-# --------------------------------------------------
-# 2. DATABASE FUNCTIONS
-# --------------------------------------------------
 
 def initialize_database():
     """Create the SQLite database and uploaded images table."""
@@ -117,10 +109,6 @@ def get_uploaded_images():
 
         return [dict(row) for row in rows]
 
-
-# --------------------------------------------------
-# 3. IMAGE VALIDATION AND STORAGE
-# --------------------------------------------------
 
 def validate_image(contents):
     """Validate image size, format and image content."""
@@ -235,10 +223,6 @@ def save_uploaded_image(contents, category, original_filename="uploaded_image"):
     return filename
 
 
-# --------------------------------------------------
-# 4. IMAGE PREPROCESSING
-# --------------------------------------------------
-
 def preprocess_image(image_path):
     """Convert an image to RGB, resize and normalize it."""
 
@@ -262,9 +246,6 @@ def preprocess_image(image_path):
         ) from error
 
 
-# --------------------------------------------------
-# 5. PREPARE TRAINING DATASET
-# --------------------------------------------------
 
 def prepare_training_dataset(include_uploaded=True):
     """
@@ -396,10 +377,6 @@ def prepare_training_dataset(include_uploaded=True):
     return X, y, summary
 
 
-# --------------------------------------------------
-# 6. SPLIT TRAINING AND VALIDATION DATA
-# --------------------------------------------------
-
 def split_retraining_dataset(X, y, validation_size=0.2):
 
     X_train, X_val, y_train, y_val = train_test_split(
@@ -412,9 +389,6 @@ def split_retraining_dataset(X, y, validation_size=0.2):
 
     return X_train, X_val, y_train, y_val
 
-# --------------------------------------------------
-# 7. CREATE BATCHED TENSORFLOW DATASETS
-# --------------------------------------------------
 
 def create_tf_dataset(
     image_paths,
@@ -500,9 +474,6 @@ def create_tf_dataset(
     return dataset.prefetch(1)
 
 
-# --------------------------------------------------
-# 7. VALIDATION MACRO-F1 CHECKPOINT
-# --------------------------------------------------
 
 class MacroF1Checkpoint(Callback):
 
@@ -540,9 +511,6 @@ class MacroF1Checkpoint(Callback):
             print("New best candidate model saved!")
 
 
-# --------------------------------------------------
-# 8. CONFIGURE MODEL FOR FINE-TUNING
-# --------------------------------------------------
 
 def configure_fine_tuning(model_path=MODEL_PATH):
 
@@ -567,9 +535,6 @@ def configure_fine_tuning(model_path=MODEL_PATH):
 
     return model
 
-# --------------------------------------------------
-# 8. VALIDATION MACRO-F1 CHECKPOINT
-# --------------------------------------------------
 
 class MacroF1Checkpoint(Callback):
 
@@ -607,14 +572,6 @@ class MacroF1Checkpoint(Callback):
             self.model.save(self.save_path)
 
             print("New best candidate model saved!")
-
-# --------------------------------------------------
-# 9. RETRAIN MODEL
-# --------------------------------------------------
-
-# --------------------------------------------------
-# 9. RETRAIN MODEL
-# --------------------------------------------------
 
 def retrain_model(
     X_train,

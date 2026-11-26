@@ -13,6 +13,7 @@ data/
 
 # Generated archives
 *.zip
+*.tar.gz
 
 # Local secrets and settings
 .env

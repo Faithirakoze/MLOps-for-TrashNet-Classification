@@ -167,13 +167,15 @@ Use the same user count (`-u`), spawn rate (`-r`), duration (`-t`), image, EC2 i
 
 ### Results
 
-**Measurement status: pending.** No Locust results have been collected for the deployed EC2 instance yet, so this README does not claim measured latency or throughput. After running the one-, two-, and three-container scenarios above, copy the request count, median latency, 95th-percentile latency, requests per second, and failures from each HTML/CSV report into this table.
+The following results were collected from the EC2 deployment with Locust configured for 10 concurrent users, a spawn rate of 2 users per second, and a 2-minute run. The same image and target were used for both runs. A three-container run was not completed.
 
-| API containers | Requests | Median latency | 95th-percentile latency | Requests/sec | Failures |
-|---:|---:|---:|---:|---:|---:|
-| 1 | Pending | Pending | Pending | Pending | Pending |
-| 2 | Pending | Pending | Pending | Pending | Pending |
-| 3 | Pending | Pending | Pending | Pending | Pending |
+| API containers | Requests | Average latency | Median latency | 95th-percentile latency | Requests/sec | Failures |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 176 | 6,193 ms | 5,100 ms | 13,000 ms | 1.49 | 0 |
+| 2 | 169 | 6,427 ms | 5,200 ms | 16,000 ms | 1.43 | 0 |
+| 3 | Not run | - | - | - | - | - |
+
+In this run, adding a second API container did not improve measured latency or throughput. The results describe this instance and test load; they do not establish how the system performs under other workloads or EC2 sizes.
 
 When finished, return the deployment to one API replica and remove the temporary port `8000` security group rule:
 

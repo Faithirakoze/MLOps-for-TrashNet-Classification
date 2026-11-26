@@ -17,18 +17,16 @@ The class labels and model output order are:
 ## Application architecture
 
 ```text
-Browser
-  └── Streamlit dashboard (:8501)
-        └── FastAPI service (:8000)
-              ├── Registered production Keras model
-              └── Image prediction API
+Browser --> Streamlit dashboard (:8501) --> NGINX gateway (:8000) --+
+                                                                    +--> FastAPI replicas --> Production model
+Locust load-test client ------------------> NGINX gateway (:8000) --+
 
 Streamlit retraining page
   └── MLOps pipeline → train/validation split → candidate evaluation
                        → model registry promotion decision
 ```
 
-With Docker Compose, the dashboard reaches the API at `http://api:8000` over the private Compose network. The API loads the production model when it starts. After a model is promoted, restart the API so it loads the new production artifact:
+With Docker Compose, the dashboard reaches the NGINX gateway at `http://gateway:8000`; the gateway routes requests to the API replicas. The API loads the production model when it starts. After a model is promoted, restart the API so it loads the new production artifact:
 
 ```bash
 docker compose restart api
@@ -97,7 +95,68 @@ API_PORT=8001
 DASHBOARD_PORT=8502
 ```
 
-Compose maps those host ports to the same internal container ports. The dashboard-to-API URL remains `http://api:8000` inside Compose. `.env` is ignored by Git; do not commit secrets.
+Compose maps those host ports to the same internal gateway/dashboard ports. Inside Compose, the dashboard calls the gateway at `http://gateway:8000`. `.env` is ignored by Git; do not commit secrets.
+
+## Load test the prediction API with Locust
+
+`locustfile.py` repeatedly posts a valid image to `POST /predict` and checks for a successful JSON prediction. Request statistics include latency percentiles, requests per second, and failures. Locust can write CSV statistics and an HTML report; see the [Locust configuration reference](https://docs.locust.io/en/stable/config-options.html).
+
+### Prepare the test client
+
+Install Locust in a local Python environment, then place a valid JPEG, PNG, or WebP image at `load_test_images/sample.jpg` (or set `LOCUST_IMAGE` to another image path). This image is only a request fixture and should not be committed.
+
+```bash
+python -m pip install locust
+mkdir -p load_test_images locust-results
+```
+
+Copy a valid image to `load_test_images/sample.jpg`. Keep the Locust client on the same machine and use the same image for each replica-count run.
+
+### Prepare the EC2 deployment
+
+Push the gateway and Locust changes to GitHub. In the EC2 terminal, pull and deploy them:
+
+```bash
+cd ~/MLOps-for-TrashNet-Classification
+git pull origin main
+sudo docker compose up --build -d --scale api=1
+sudo docker compose ps
+```
+
+For the duration of the test only, add an EC2 security group inbound rule for custom TCP port `8000`, with source set to the Locust client's public IP (`My IP`). The port routes through the NGINX gateway to the API replicas. Remove this rule when testing is finished; the application normally needs no public API access.
+
+### Run comparable tests
+
+From your local project folder, run the same Locust load each time. Replace the example IP with the EC2 public IP:
+
+```bash
+locust -f locustfile.py --host http://16.170.228.234:8000 --headless -u 10 -r 2 -t 2m --csv locust-results/api-1 --html locust-results/api-1.html
+```
+
+Then change the API replica count on EC2 and repeat the exact Locust command, changing only the report name:
+
+```bash
+sudo docker compose up -d --scale api=2
+sudo docker compose ps
+```
+
+Run `api=2` using `--csv locust-results/api-2 --html locust-results/api-2.html`. You can also compare `api=3` if the EC2 instance has enough memory and CPU. Docker Compose's `--scale` option sets the requested number of service containers; the gateway discovers the replicas through Docker DNS. [Docker Compose scaling reference](https://docs.docker.com/reference/cli/docker/compose/up/)
+
+Use the same user count (`-u`), spawn rate (`-r`), duration (`-t`), image, EC2 instance, and software version for every run. Start with a modest load such as 10 users and increase only if the instance remains stable. The HTML reports and CSV files are written under `locust-results/` and ignored by Git.
+
+Compare these values from each Locust report:
+
+| API containers | Requests | Median latency | 95th-percentile latency | Requests/sec | Failures |
+|---:|---:|---:|---:|---:|---:|
+| 1 | | | | | |
+| 2 | | | | | |
+| 3 | | | | | |
+
+When finished, return the deployment to one API replica and remove the temporary port `8000` security group rule:
+
+```bash
+sudo docker compose up -d --scale api=1
+```
 
 ## Dataset layout for retraining
 
@@ -125,41 +184,6 @@ Put valid images in each class folder. The holdout set must contain at least one
 
 The pipeline also requires enough training examples in every class for a stratified train/validation split. If a class folder is missing, the pipeline stops with a `Missing training folder` error. Empty class folders do not make a valid training dataset.
 
-### Transfer datasets to an AWS EC2 deployment using S3
-
-This is an alternative to SSH/SCP for instances without an assigned key pair.
-
-1. From Git Bash on your computer, package the two data directories:
-
-   ```bash
-   tar -czf trashnet-datasets.tar.gz -C data train holdout
-   ```
-
-2. Create a private S3 bucket in the same AWS Region as the EC2 instance, keep Block Public Access enabled, and upload `trashnet-datasets.tar.gz`.
-
-3. Attach an IAM role to the EC2 instance that allows `s3:GetObject` on this bucket and `s3:ListBucket` on the bucket itself. Avoid putting long-lived AWS access keys on the instance. See [attaching an IAM role to an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/attach-iam-role.html) and [using the EC2 instance role with AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-metadata.html).
-
-4. In the EC2 terminal, install the AWS CLI and download/extract the archive:
-
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y awscli
-   aws s3 cp s3://YOUR_BUCKET_NAME/trashnet-datasets.tar.gz /home/ubuntu/trashnet-datasets.tar.gz
-   mkdir -p /home/ubuntu/trashnet-datasets
-   tar -xzf /home/ubuntu/trashnet-datasets.tar.gz -C /home/ubuntu/trashnet-datasets
-   ```
-
-5. From the project directory on EC2, copy both directories into the shared Compose data volume:
-
-   ```bash
-   cd ~/MLOps-for-TrashNet-Classification
-   sudo docker compose cp /home/ubuntu/trashnet-datasets/train api:/app/data/
-   sudo docker compose cp /home/ubuntu/trashnet-datasets/holdout api:/app/data/
-   sudo docker compose exec api ls /app/data/train
-   sudo docker compose exec api ls /app/data/holdout
-   ```
-
-Each listing should contain all six class folders. The `api` and `dashboard` services share the `app_data` volume, so the retraining page can read these folders.
 
 ## MLOps retraining workflow
 
@@ -190,7 +214,7 @@ The prediction and retraining image endpoints accept JPEG, PNG, and WebP images 
 
 - Launch an Ubuntu EC2 instance with enough memory and disk for TensorFlow and model artifacts.
 - Install Docker Engine and Compose using [Docker's Ubuntu installation instructions](https://docs.docker.com/engine/install/ubuntu/).
-- In the security group, restrict SSH (`22`) to your IP and allow the dashboard (`8501`) only from intended clients. Do not add an inbound rule for the API (`8000`); Compose publishes it on the host, but AWS security groups should keep it inaccessible from the internet. See [EC2 security group guidance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-security-group.html).
+- In the security group, restrict SSH (`22`) to your IP and allow the dashboard (`8501`) only from intended clients. Keep API port `8000` closed to inbound traffic except temporarily from the Locust client's IP during load testing. See [EC2 security group guidance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-security-group.html).
 - Start the app on EC2 with `sudo docker compose up --build -d`.
 - The dashboard has no built-in login or HTTPS. For a private demo, restrict port `8501` to your IP. Before making it publicly accessible, put it behind HTTPS and add access control.
 - Persist and back up the EC2 storage that contains Docker volumes. Docker volumes survive container recreation, but data may be lost if the underlying instance storage is deleted. See [EC2 storage options](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Storage.html).
@@ -218,6 +242,8 @@ tests/                     Unit and workflow tests
 notebook/                  Exploratory notebook
 Dockerfile                 Shared API/dashboard image
 compose.yaml               Local and EC2 multi-container setup
+nginx.conf                 Gateway that routes across API replicas
+locustfile.py              Locust image-prediction load scenario
 requirements.txt           Python dependencies
 ```
 
@@ -229,7 +255,3 @@ The repository tests use pytest. Install it in the active virtual environment if
 python -m pip install pytest
 python -m pytest
 ```
-
-## Data and model files in Git
-
-Do not commit `.venv/`, local secrets, SQLite files, uploads, or training/holdout datasets. The production model `models/trashnet_best_model.h5`, `models/class_names.json`, and `models/registry/model_registry.json` are required for a fresh deployment and should be committed. Candidate model binaries can stay in deployment storage rather than Git.
